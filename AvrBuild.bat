@@ -1,0 +1,2 @@
+@ECHO OFF
+"D:\AVR Tools\AvrAssembler2\avrasm2.exe" -S "D:\desktop\Progetti Pratica\hd44780\labels.tmp" -fI -W+ie -C V2E -o "D:\desktop\Progetti Pratica\hd44780\hd44780_driver.hex" -d "D:\desktop\Progetti Pratica\hd44780\hd44780_driver.obj" -e "D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.eep" -m "D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.map" -l "D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.lst" "D:\desktop\Progetti Pratica\hd44780\main.asm"

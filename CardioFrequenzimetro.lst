@@ -1,0 +1,1329 @@
+
+AVRASM ver. 2.1.42  D:\desktop\Progetti Pratica\hd44780\main.asm Fri Sep 24 17:27:30 2010
+
+D:\desktop\Progetti Pratica\hd44780\main.asm(11): Including file 'D:\AVR Tools\AvrAssembler2\Appnotes\m8def.inc'
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): Including file 'D:\desktop\Progetti Pratica\hd44780\div8u.asm'
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(28): warning: Register r16 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(37): warning: Register r15 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(38): warning: Register r16 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(39): warning: Register r17 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(40): warning: Register r16 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(41): warning: Register r17 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(42): warning: Register r18 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(43): warning: Register r19 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\div8u.asm(44): warning: Register r20 already defined by the .DEF directive
+D:\desktop\Progetti Pratica\hd44780\main.asm(100): 'D:\desktop\Progetti Pratica\hd44780\div8u.asm' included form here
+D:\desktop\Progetti Pratica\hd44780\main.asm(101): Including file 'D:\desktop\Progetti Pratica\hd44780\hd44780.asm'
+D:\desktop\Progetti Pratica\hd44780\hd44780.asm(15): Including file 'D:\desktop\Progetti Pratica\hd44780\hd44780.inc'
+                 
+                 
+                 ; * [Progetto Dispositi Impiantabili]        *
+                 ; * [Cardio Frequenzimetro]                  *
+                 ; ********************************************
+                 ;
+                 ; ============================================
+                 ;      H E A D E R     F I L E S
+                 ; ============================================
+                 
+                 .LIST
+                 
+                 ; ==============================================
+                 ;   D E F I N I Z I O N E     R E G I S T R I
+                 ; ==============================================
+                 
+                 .def minimo_bpm       = r9
+                 .def max_bpm          = r10
+                 .def indice_avr_array = r19
+                 .def battiti_secondo  = r20
+                 .def battiti          = r0
+                 .def timer_minuti     = r1
+                 ; ============================================
+                 ; HD44780 LCD Assembly driver
+                 ; Available routines
+                 ; LCD_Init - initialization of LCD
+                 ; LCD_WriteCommand - write to command register
+                 ; LCD_WriteData - write to data register
+                 ; LCD_WriteString - display string from program memory
+                 ; LCD_SetAddress - sets address in Display Data RAM
+                 ; ============================================
+                 
+                 ; ============================================
+                 ;     S R A M    S E G M E N T
+                 ; ============================================
+                 .DSEG
+                 .org 0x0060
+                 
+                 average:   ; dati che mi servono per costruire la media
+000060           .byte 11
+                 
+                 
+                 ; ============================================
+                 ;     E E P R O M   S E G M E N T
+                 ; ============================================
+                 .eseg
+                 .org 0x0000
+                 
+                 last_bpm:
+000000           .BYTE 1    ; riservo il byte per poter salvare il battito voluto
+                 
+                 ; ============================================
+                 ;     C O D E      S E G M E N T
+                 ; ============================================
+                 
+                 .CSEG                      
+                 .org 0x0000
+                 
+                 ; ============================================
+                 ;     I N T E R R U P T   S E R V I C E S
+                 ; ============================================
+                 
+000000 c0b9      	rjmp ProgramEntryPoint ; Reset
+000001 9518      	reti ; Int0
+000002 9518      	reti ; Int1
+000003 9518      	reti ; TC2 Comp
+000004 9518          reti ; TC2 Ovf
+000005 c19f      	rjmp count_Pulse ; TC1 Capt
+000006 9518      	reti ; TC1 Comp A
+000007 9518      	reti ; TC1 Comp B
+000008 c1ac      	rjmp every_Second ; TC1 Ovf
+000009 9518      	reti ; TC0 Ovf
+00000a 9518      	reti ; SPI STC
+00000b 9518      	reti ; USART RX
+00000c 9518      	reti ; USART UDRE
+00000d 9518      	reti ; USART TXC
+00000e 9518      	reti ; ADC Conv Compl
+00000f 9518      	reti ; EERDY
+000010 9518      	reti ; ANA_COMP
+000011 9518      	reti ; TWI
+000012 9518      	reti ; SPM_RDY
+                 
+                 
+                 ; ============================================
+                 ;     S T R I N G 
+                 ; ============================================
+000013 2020
+000014 0020      Blank: .db "   ",0
+000015 6153
+000016 6576
+000017 0064      Save: .db "Saved",0
+000018 006d      Min: .db "m",0
+000019 004d      Max: .db "M",0
+00001a 454d
+00001b 0000      Media: .db "ME",0,0
+00001c 004c      Last: .db "L",0
+00001d 7042
+00001e 3a6d
+00001f 0000      Bpm: .db "Bpm:",0,0
+000020 6553
+000021 3a63
+000022 0000      Secondi: .db "Sec:",0,0
+                 
+                 ; ============================================
+                 ;     I N C L U D E     F I L E S
+                 ; ============================================
+                 .include "div8u.asm"    ; file che contiene tutte le operazioni matematiche
+                 
+                 ;* "div8u"  - Divisione 8/8 Bit - senza segno
+                 ;*
+                 ;* La subroutine divide 2 numeri a 8 bit
+                 ;* - dd8u    (dividendo)  r16
+                 ;* - dv8u    (divisore)   r17 
+                 ;* Il risultato è posto in 
+                 ;* - dres8u  (quoziente)  r16
+                 ;* - drem8u  (resto)      r15
+                 ;*
+                 ;* dividendo: divisore = quoziente + resto
+                 ;*
+                 ;* "div16u" - Divisione 16/16 Bit - senza segno
+                 ;*
+                 ;* La subroutine divide 2 numeri a 16 bit
+                 ;* - "dd16uH:dd16uL"        (dividendo)  r17:r16
+                 ;* - "dv16uH:dv16uL"        (divisore)   r19:r18
+                 ;* Il risultato è posto in 
+                 ;* - "dres16uH:dres16uL"    (quoziente)  r17:r16
+                 ;* - "drem16uH:drem16uL"    (resto)      r15:r14
+                 ;*  
+                 ;***************************************************************************
+                 
+                 ;***** Registri usati per la funzione a 8 bit
+                 
+                 .def	drem8u	=r15		;resto
+                 .def	dres8u	=r16		;risultato
+                 .def	dd8u	=r16		;dividendo
+                 .def	dv8u	=r17		;divisore
+                 .def	dcnt8u	=r18		;contatore
+                 
+                 
+                 
+                 ;***** Registri usati per la funzione a 16 bit
+                 
+                 .def drem16uL=r14          ; resto
+                 .def drem16uH=r15          ; resto
+                 .def dres16uL=r16          ; risultato
+                 .def dres16uH=r17          ; risultato
+                 .def dd16uL =r16           ; dividendo          
+                 .def dd16uH =r17           ; dividendo
+                 .def dv16uL =r18           ; divisore
+                 .def dv16uH =r19           ; divisore
+                 .def dcnt16u =r20          ; contatore
+                 
+                 
+                 
+                 ;***** FUNZIONE A 8 BIT *************************
+                 div8u:
+000023 932f          push    dcnt8u          ; salvo il dato in r18
+000024 18ff      	sub		drem8u,drem8u	; cancello resto ed il Flag di riporto
+000025 e029      	ldi		dcnt8u,9		; inizializzo il contatore
+                 d8u_1:	
+000026 1f00      	rol		dd8u			; shifto a sinistra il dividendo caricando il Flag Carry 
+                 	                        ; da inserire poi nel registro del resto
+000027 952a      	dec		dcnt8u			; decremento il contatore
+000028 f411      	brne	d8u_2			; se ho finito e quindi dcnt8u è <> 0
+000029 912f      	pop     dcnt8u          ; ripristino il dato in r18 
+00002a 9508      	ret						; ritorno
+                 d8u_2:	
+00002b 1cff      	rol		drem8u			; shifto a sinistra il resto con il flag Carry del dividendo
+00002c 1af1      	sub		drem8u,dv8u		; verifico che il resto = resto - divisore
+00002d f418      	brcc	d8u_3			; se ho un risultato negativo 
+00002e 0ef1      	add		drem8u,dv8u		; ripristino il resto 
+00002f 9488      	clc						; cancello il flag carry affinchè non vada nel risultato
+000030 cff5      	rjmp	d8u_1			; altrimenti
+                 d8u_3:	
+000031 9408      	sec						; imposto il flag carry perchè vada nel risultato
+000032 cff3      	rjmp	d8u_1
+                 
+                 
+                 
+                 
+                 ;***** FUNZIONE A 16 BIT ***********************************
+                 
+                 div16u: 
+000033 934f          push dcnt16u            ; salvo il dato in r20
+000034 24ee          clr drem16uL            ; cancello il byte Low del resto
+000035 18ff          sub drem16uH,drem16uH   ; cancello resto High ed il Flag di riporto
+000036 e141          ldi dcnt16u,17          ; inizializzo il counter
+                 d16u_1: 
+000037 1f00          rol dd16uL              ; shifto a sinistra il dividendo caricando il Flag Carry 
+                 	                        ; da inserire poi nel registro del resto
+000038 1f11          rol dd16uH
+000039 954a          dec dcnt16u             ; decremento il contatore
+00003a f411          brne d16u_2             ; se ho finito e quindi dcnt18u è <> 0
+00003b 914f      	pop dcnt16u             ; ripristino il dato in r20
+00003c 9508          ret                     ; ritorno
+                 d16u_2: 
+00003d 1cee          rol drem16uL            ; shifto a sinistra il resto con il flag Carry del dividendo
+00003e 1cff          rol drem16uH
+00003f 1ae2          sub drem16uL,dv16uL     ; verifico che il resto = resto - divisore 
+000040 0af3          sbc drem16uH,dv16uH     ;
+000041 f420          brcc d16u_3             ; se ho un risultato negativo 
+000042 0ee2          add drem16uL,dv16uL     ; ripristino il resto 
+000043 1ef3          adc drem16uH,dv16uH
+000044 9488          clc                     ; cancello il flag carry affinchè non vada nel risultato
+000045 cff1          rjmp d16u_1             ; altrimenti
+                 d16u_3: 
+000046 9408          sec                     ; imposto il flag carry perchè vada nel risultato
+000047 cfef          rjmp d16u_1
+                 
+                 .include "hd44780.asm"  ; file driver per lo schermo LCD
+                 
+                 ; HD44780 LCD Assembly driver
+                 ; Available routines
+                 ; LCD_Init - initialization of LCD
+                 ; LCD_WriteCommand - write to command register
+                 ; LCD_WriteData - write to data register
+                 ; LCD_WriteString - display string from program memory
+                 ; LCD_SetAddress - sets address in Display Data RAM
+                 ; ============================================
+                 
+                 ;*********************************************
+                 ; Definizione delle costanti usate per LCD
+                 ; si utilizza la PortD i cui piedini sono indicati sotto
+                 
+                 .include "hd44780.inc"           ; definizione di tutte le costanti di comando per LCD
+                 
+                 
+                 #define HD44780_HOME					0x02
+                 
+                 #define HD44780_ENTRY_MODE				0x04
+                 #define HD44780_EM_SHIFT_CURSOR		    0
+                 #define HD44780_EM_SHIFT_DISPLAY	    1
+                 #define HD44780_EM_DECREMENT		    0
+                 #define HD44780_EM_INCREMENT		    2
+                 
+                 #define HD44780_DISPLAY_ONOFF			0x08
+                 #define HD44780_DISPLAY_OFF			    0
+                 #define HD44780_DISPLAY_ON			    4
+                 #define HD44780_CURSOR_OFF			    0
+                 #define HD44780_CURSOR_ON			    2
+                 #define HD44780_CURSOR_NOBLINK		    0
+                 #define HD44780_CURSOR_BLINK		    1
+                 
+                 #define HD44780_DISPLAY_CURSOR_SHIFT	0x10
+                 #define HD44780_SHIFT_CURSOR		    0
+                 #define HD44780_SHIFT_DISPLAY		    8
+                 #define HD44780_SHIFT_LEFT			    0
+                 #define HD44780_SHIFT_RIGHT			    4
+                 
+                 #define HD44780_FUNCTION_SET			0x20
+                 #define HD44780_FONT5x7				    0
+                 #define HD44780_FONT5x10			    4
+                 #define HD44780_ONE_LINE			    0
+                 #define HD44780_TWO_LINE			    8
+                 #define HD44780_4_BIT				    0
+                 #define HD44780_8_BIT				    16
+                 
+                 #define HD44780_CGRAM_SET				0x40
+                 
+                 #define HD44780_DDRAM_SET				0x80
+                 
+                 .equ	LCD_PORT 	= PORTD
+                 .equ	LCD_DDR		= DDRD
+                 .equ    LCD_PIN		= PIND
+                 
+                 .equ	LCD_D4 		= 0
+                 .equ	LCD_D5 		= 1
+                 .equ 	LCD_D6 		= 2
+                 .equ	LCD_D7 		= 3
+                 
+                 .equ	LCD_RS		= 7
+                 .equ	LCD_EN		= 6
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;    SI INIZIALIZZA LCD CON LA RISPETTIVA PIEDINATURA
+                 ;    SI ESEGUE ANCHE UN RITARDO PERCHE' LA CPU DELL'LCD NON
+                 ;    E' VELOCE QUANTO QUELLA DEL MICROPROCESSORE
+                 ;------------------------------------------------------------------------------
+                 
+                 Init_LCD:
+000048 930f      	push r16
+000049 931f      	push r17
+                 	
+00004a 9a88      	sbi		LCD_DDR, LCD_D4
+00004b 9a89      	sbi		LCD_DDR, LCD_D5
+00004c 9a8a      	sbi		LCD_DDR, LCD_D6
+00004d 9a8b      	sbi		LCD_DDR, LCD_D7
+                 	
+00004e 9a8f      	sbi		LCD_DDR, LCD_RS
+00004f 9a8e      	sbi		LCD_DDR, LCD_EN
+                 
+000050 9897      	cbi		LCD_PORT, LCD_RS
+000051 9896      	cbi		LCD_PORT, LCD_EN
+                 
+000052 e104      	ldi		r16, 20
+000053 d05e      	rcall	WaitMilliseconds      ;; carico 20 millisecondi da aspettare per fase handshaking
+                 
+000054 e013      	ldi		r17, 3
+                 InitLoop:
+000055 e003      	ldi		r16, 0x03
+000056 d015      	rcall	LCD_WriteNibble       ; carico 2 millisecondo per inizializzare LCD
+000057 e002      	ldi		r16, 2
+000058 d059      	rcall	WaitMilliseconds
+000059 951a      	dec		r17
+00005a f7d1      	brne	InitLoop
+                 
+00005b e002      	ldi		r16, 0x02
+00005c d00f      	rcall	LCD_WriteNibble
+                 
+00005d e001      	ldi		r16, 1
+00005e d053      	rcall	WaitMilliseconds
+                 
+00005f e208      	ldi		r16, HD44780_FUNCTION_SET | HD44780_FONT5x7 | HD44780_TWO_LINE | HD44780_4_BIT
+000060 d028      	rcall	LCD_WriteCommand
+                 
+000061 e008      	ldi		r16, HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_OFF
+000062 d026      	rcall	LCD_WriteCommand
+                 
+000063 e001      	ldi		r16, HD44780_CLEAR
+000064 d024      	rcall	LCD_WriteCommand
+                 
+000065 e006      	ldi		r16, HD44780_ENTRY_MODE |HD44780_EM_SHIFT_CURSOR | HD44780_EM_INCREMENT
+000066 d022      	rcall	LCD_WriteCommand
+                 
+000067 e00c      	ldi		r16, HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_ON | HD44780_CURSOR_OFF | HD44780_CURSOR_NOBLINK
+000068 d020      	rcall	LCD_WriteCommand
+                     
+000069 911f      	pop r17
+00006a 910f      	pop r16
+00006b 9508      ret
+                 
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   Manda 1 nibble di dati a LCD. I dati sono passati mediante il registro r16
+                 ;------------------------------------------------------------------------------
+                 
+                 LCD_WriteNibble:
+00006c 9a96      	sbi		LCD_PORT, LCD_EN   
+                 
+00006d ff00      	sbrs	r16, 0                ; Salta istruzione successiva se il bit nel registro è 1
+00006e 9890      	cbi		LCD_PORT, LCD_D4
+00006f fd00      	sbrc	r16, 0                ; Salta istruzione successiva se il bit nel registro è 0
+000070 9a90      	sbi		LCD_PORT, LCD_D4
+                 	
+000071 ff01      	sbrs	r16, 1
+000072 9891      	cbi		LCD_PORT, LCD_D5
+000073 fd01      	sbrc	r16, 1
+000074 9a91      	sbi		LCD_PORT, LCD_D5
+                 	
+000075 ff02      	sbrs	r16, 2
+000076 9892      	cbi		LCD_PORT, LCD_D6
+000077 fd02      	sbrc	r16, 2
+000078 9a92      	sbi		LCD_PORT, LCD_D6
+                 	
+000079 ff03      	sbrs	r16, 3
+00007a 9893      	cbi		LCD_PORT, LCD_D7
+00007b fd03      	sbrc	r16, 3
+00007c 9a93      	sbi		LCD_PORT, LCD_D7
+                 
+00007d 9896      	cbi		LCD_PORT, LCD_EN
+00007e 9508      ret
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   La funzione invia il comando di scrivire i dati presenti in r16
+                 ;------------------------------------------------------------------------------
+                 LCD_WriteData:
+00007f 9a97      	sbi		LCD_PORT, LCD_RS
+000080 930f      	push	r16
+000081 9502      	swap	r16
+000082 dfe9      	rcall	LCD_WriteNibble
+000083 910f      	pop		r16
+000084 dfe7      	rcall	LCD_WriteNibble
+                 
+000085 27bb      	clr		XH
+000086 efaa      	ldi		XL,250                ; aspetta 250 microsecondi
+000087 d027      	rcall	Wait4xCycles
+000088 9508      ret
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   Manda il comando caricato in r16 al LCD
+                 ;------------------------------------------------------------------------------
+                 LCD_WriteCommand:
+000089 9897      	cbi		LCD_PORT, LCD_RS
+00008a 930f      	push	r16
+00008b 9502      	swap	r16
+00008c dfdf      	rcall	LCD_WriteNibble
+00008d 910f      	pop		r16
+00008e dfdd      	rcall	LCD_WriteNibble
+00008f e002      	ldi		r16,2
+000090 d021      	rcall	WaitMilliseconds
+000091 9508      ret
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   Scrive un'intera stringa terminata con 0. Nel registro a 16 bit Z vi è
+                 ;   l'indirizzo della stringa da scrivere   
+                 ;------------------------------------------------------------------------------
+                 LCD_WriteString:
+000092 9105      	lpm		r16, Z+
+000093 3000      	cpi		r16, 0
+000094 f011      	breq	exit
+000095 dfe9      	rcall	LCD_WriteData
+000096 cffb      	rjmp	LCD_WriteString
+                 exit:
+000097 9508      ret
+                 
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   Conversione dei caratteri da Hex a Decimali
+                 ;   In input ho il dato da convertire in r16 che quindi non viene salvato
+                 ;------------------------------------------------------------------------------
+                 LCD_WriteDecimal:
+000098 92ef          push    r14
+000099 931f      	push    r17
+00009a 92ff      	push    r15
+                 
+00009b 24ee      	clr		r14                    ; conta le cifre convertite da 1 a 3 (registro 8 bit->255)
+                 LCD_WriteDecimalLoop:
+00009c e01a      	ldi		r17,10                 ; base di conversione decimale
+00009d df85      	rcall	div8u                  ; funzione di divisione
+00009e 94e3      	inc		r14                    ; incremento il contatore di cifre
+00009f 92ff      	push	r15                    ; salva il resto della divisione (guarda la funz div8u)
+0000a0 3000      	cpi		r16,0 
+0000a1 f7d1      	brne	LCD_WriteDecimalLoop	
+                 
+                 LCD_WriteDecimalLoop2:
+0000a2 e310      	ldi		r17,'0'                ; inserisco il riferimento base dello 0 dal set di caratteri
+0000a3 910f      	pop		r16                    
+0000a4 0f01      	add		r16,r17                ; aggiunge al resto il riferimento
+0000a5 dfd9      	rcall	LCD_WriteData
+0000a6 94ea      	dec		r14
+0000a7 f7d1      	brne	LCD_WriteDecimalLoop2
+                     
+0000a8 90ff      	pop r15
+0000a9 911f      	pop r17
+0000aa 90ef      	pop r14    
+0000ab 9508      ret
+                 
+                 
+                 
+                 ;------------------------------------------------------------------------------
+                 ;   Comanda la possibilità di scrivere in un qualsiasi posto sull'LCD di
+                 ;   cordinate x,y. 
+                 ;   Per la prima riga la x = 0 mentre per la seconda è = a 40.
+                 ;   La y puo' variare fino a 16 (x un LCD 2x16)
+                 ;------------------------------------------------------------------------------
+                 LCD_SetAddress:
+0000ac 6800      	ori		r16, HD44780_DDRAM_SET
+0000ad dfdb      	rcall	LCD_WriteCommand
+0000ae 9508      ret
+                 
+                 
+                 
+                 
+                 ;***********************************************************************************
+                 ;* Funzioni di utlità che mi permettono di ritardare l'esecuzione del comando
+                 ;* Per una frequenza di CPU = 4MHz ho che per ogni ciclo impiego 0.25 microsecondi
+                 ;* La funzione ha:
+                 ;* - in XH:XL   ho il numero di microsecondi da aspettare prima
+                 ;*              di avviare il comando successivo  si noti che ho 2 istruzioni che mi 
+                 ;*              fanno perdere già 1 microsecondo perchè ci mettono 2 colpi di clock
+                 ;***********************************************************************************
+                 Wait4xCycles:
+0000af 9711      	sbiw	XH:XL, 1		; x-- (2 cicli)
+0000b0 f7f1      	brne	Wait4xCycles	; salta se non è zero (2 cicli)
+0000b1 9508      ret
+                 
+                 ;------------------------------------------------------------------------------
+                 ; Input : r16 - numbero di milliseconds da aspettare
+                 ;------------------------------------------------------------------------------
+                 WaitMilliseconds:
+0000b2 930f      	push	r16
+                 WaitMsLoop:	
+0000b3 e0b3      	ldi		XH,HIGH(1000)
+0000b4 eea8      	ldi		XL,LOW(1000)
+0000b5 dff9      	rcall	Wait4xCycles
+0000b6 950a      	dec		r16
+0000b7 f7d9      	brne	WaitMsLoop
+0000b8 910f      	pop		r16
+0000b9 9508      ret
+                 
+                 ;
+                 ; ============================================
+                 ;     M A I N    P R O G R A M    I N I T
+                 ; ============================================
+                 ;
+                 
+                 ProgramEntryPoint:
+                      
+                 	; configuro lo stack    
+0000ba e004      	ldi r16,high(RAMEND); Main program start
+0000bb bf0e          out SPH,r16 ; Set Stack Pointer to top of RAM
+0000bc e50f          ldi r16,low(RAMEND)
+0000bd bf0d          out SPL,r16
+                     
+                 	; inizializziamo la memoria Sram azzerando l'array di dati
+0000be d04c      	rcall init_Sram
+                 
+                 	; inizializzo LCD
+0000bf df88        	rcall init_LCD
+                 
+                 	; inizializzo tutte le porte per la pressione dei bottoni
+0000c0 d077          rcall init_My_Port
+                    
+                    	; mi serve per contare 1 secondo
+                 	; contanto poi il numero di cicli in questa finestra temporale
+                 	; con modalità rising edge input capture
+0000c1 d06b      	rcall init_window_Pulse_Counter_Interrupt
+                     
+                 	; inizializzo la maschera LCD
+0000c2 d050      	rcall init_LCD_mask
+                     
+                     ; recupero il data precedentemente salvato dei battiti
+0000c3 e305       	ldi		r16,53                  
+0000c4 dfe7      	rcall	LCD_SetAddress     ; go to 13,1
+0000c5 d0d2      	rcall   EEPROM_read        ; dato letto dalla EEPROM e restituito in battiti
+0000c6 2d00      	mov     r16, battiti
+0000c7 dfd0          rcall	LCD_WriteDecimal   ; conversione e scrittura su LCD
+                 
+                     
+                 	; azzero tutti i contatori e tutti i registri che andrò ad utilizzare
+0000c8 2400      	clr battiti
+0000c9 2744      	clr battiti_secondo        
+0000ca 2499          clr minimo_bpm      
+0000cb 24aa          clr max_bpm          
+0000cc 2733         	clr indice_avr_array     ; azzero il contatore array per la media
+0000cd 2411          clr timer_minuti
+                 
+0000ce 9478          sei
+                 loop:	
+                  	; verifico che non vi sia un tasto premuto
+0000cf d06f      	rcall is_Key_Pressed
+                  ; non faccio nulla
+0000d0 cffe      rjmp loop
+                 
+                 
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione Calcola BPM calcola i battiti per minuto
+                 ;---------------------------------------------------------------------------------
+                 calcola_BPM:
+                    
+                     ; in registro battiti ho i battiti al secondo
+                     ; moltiplico questo dato semplicemente per 60
+                 
+0000d1 2e04      	mov battiti, battiti_secondo    ; ho ottenuto i battiti medi per secondo
+                 	                                ; tanto so che i battiti non saranno superiori a 240
+                 
+0000d2 9508      ret
+                 
+                 
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione STORE BPM memorizza il dato acquisito sulla SRAM
+                 ;---------------------------------------------------------------------------------
+                 
+                 store_BPM:
+                        
+0000d3 e6c0          ldi YL, low(average)       ; calcolo la base dell'array
+0000d4 e0d0          ldi YH, high(average)
+                    
+0000d5 0fc3      	add YL, indice_avr_array     ; indicizzo sul byte corretto
+                 
+0000d6 8208          st Y, battiti                ; memorizzo il dato 
+                 
+0000d7 9508      ret
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione index_array_Manager gestisce l'indice dell'array in SRAM
+                 ;   e se raggiunge 10 lo resetta
+                 ;---------------------------------------------------------------------------------
+                 index_array_Manager:
+                  
+                 	; incremento ed eseguo il check per vedere se l'indice è superiore a 10 
+                 	; (nel qualcaso lo azzero)
+0000d8 2000          tst battiti                    ; se il dato è diverso da zero lo memorizzo
+                 	                               ; altrimenti vado in uscita senza far nulla
+0000d9 f021          breq   exit_index_Manager
+                 
+0000da 9533      	inc indice_avr_array
+                     
+0000db 303a      	cpi  indice_avr_array, 10
+0000dc f008          brlo exit_index_Manager       ; se indice avr array è inferiore a 10 esco senza far
+                 	                              ; nulla altrimenti azzero il contatore
+0000dd 2733          clr indice_avr_array
+                 exit_index_Manager:
+                     
+0000de 9508      ret
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione Visualizza BPM per visualizzare su LCD i battiti per minuto
+                 ;---------------------------------------------------------------------------------
+                 visualizza_BPM:
+                 
+0000df e20c      	ldi		r16,44                   
+0000e0 dfcb      	rcall	LCD_SetAddress     ; coordinate 4,1
+                     
+0000e1 e2e6      	ldi		ZL,LOW(Blank << 1)     ;
+0000e2 e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+0000e3 dfae      	rcall	LCD_WriteString  
+                     
+0000e4 e20c      	ldi		r16,44                   
+0000e5 dfc6      	rcall	LCD_SetAddress     ; coordinate 4,1
+                  
+0000e6 2d00       	mov		r16,battiti             ; visualizza i battiti per minuto
+0000e7 dfb0      	rcall	LCD_WriteDecimal     
+                 
+0000e8 9508      ret
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione UPDATE Min aggiorna il valore del minimo rilevato su LCD
+                 ;---------------------------------------------------------------------------------
+                 
+                 update_Min:
+                     
+0000e9 930f      	push r16
+                 	
+0000ea 2099          tst  minimo_bpm      
+0000eb f011      	breq aggiorna_Min       ; se il registro è 0 significa che siamo in inizializzazione
+                 		
+0000ec 1409      	cp battiti, minimo_bpm  ; dato che non siamo all'inizio allora confrontiamo per
+                 	                        ; vedere se sono da aggiornare dei dati
+                                             ; se i battiti rilevati sono superiori al minimo precedentemente
+                 							; rilevato non devo fare nulla e quindi vado all'uscita
+0000ed f450      	brsh uscita_Update_Min    
+                 
+                 aggiorna_Min:
+0000ee 2c90          mov     minimo_bpm, battiti   
+                 
+0000ef e009      	ldi		r16,9              ; coordinata di base per visualizzare il dato Min bpm
+0000f0 dfbb      	rcall	LCD_SetAddress     ; go to 9,0 
+                  
+0000f1 e2e6       	ldi		ZL,LOW(Blank << 1)     ;
+0000f2 e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+0000f3 df9e      	rcall	LCD_WriteString  
+                 
+0000f4 e009      	ldi		r16,9              ; coordinata di base per visualizzare il dato Min bpm
+0000f5 dfb6      	rcall	LCD_SetAddress     ; go to 9,0 
+                 
+0000f6 2d00       	mov		r16,battiti            ;
+0000f7 dfa0      	rcall	LCD_WriteDecimal    
+                 
+                 uscita_Update_Min:
+0000f8 910f      	pop r16
+0000f9 9508      ret
+                 
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione UPDATE Max aggiorna il valore del max rilevato su LCD
+                 ;---------------------------------------------------------------------------------
+                 
+                 
+                 update_Max:
+                     
+0000fa 930f      	push r16
+                 	
+0000fb 20aa          tst  max_bpm      
+0000fc f011      	breq aggiorna_Max         ; se il registro è 0 significa che siamo in inizializzazione
+                 		
+0000fd 140a      	cp battiti, max_bpm     ; dato che non siamo all'inizio allora confrontiamo per
+                 	                        ; vedere se sono da aggiornare dei dati
+                                             ; se i battiti rilevati sono inferiori al max precedentemente
+                 							; rilevato non devo fare nulla e quindi vado all'uscita
+0000fe f050      	brlo uscita_Update_Max    
+                 
+                 aggiorna_Max:
+0000ff 2ca0          mov     max_bpm, battiti
+                    
+000100 e00d       	ldi		r16,13              ; coordinata di base per visualizzare il dato Max bpm
+000101 dfaa      	rcall	LCD_SetAddress     ; go to 13,0 
+                  
+                 
+000102 e2e6       	ldi		ZL,LOW(Blank << 1)     ;
+000103 e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+000104 df8d      	rcall	LCD_WriteString  
+                     
+000105 e00d      	ldi		r16,13              ; coordinata di base per visualizzare il dato Max bpm
+000106 dfa5      	rcall	LCD_SetAddress     ; go to 13,0 
+                  
+000107 2d00       	mov		r16,battiti            ;
+000108 df8f      	rcall	LCD_WriteDecimal    
+                 
+                 uscita_Update_Max:
+000109 910f      	pop r16
+00010a 9508      ret
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione Init Sram che serve per azzera la memoria
+                 ;---------------------------------------------------------------------------------
+                 init_Sram:
+00010b 2411          clr r1
+                 
+                 	; inizializzo l'array che contiene gli ultimi 10 dati per poi fare la media
+00010c e03b      	ldi indice_avr_array, 11
+                 
+00010d e6c0         	ldi YL, low(average)
+00010e e0d0          ldi YH, high(average)
+                 
+                 loop_init_Sram:
+00010f 9219          st Y+, r1
+000110 953a      	dec indice_avr_array
+000111 f7e9      brne loop_init_Sram
+                    
+000112 9508      ret
+                 
+                 
+                 
+                 ; ============================================
+                 ;     INIT LCD MASK
+                 ;     Creo la maschera su LCD statica
+                 ; ============================================
+                 ;
+                 ;******************************************************
+                 ;  0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|
+                 ;0 S|E|C|:|X|X|X| |m|X|X |X	|M |X |X |X |
+                 ;1 B|P|M|:|X|X|X|S|A|V|E |D |L |X |X |X |
+                 ;1  | | | | | | |M|E|X|X |X |L |X |X |X |
+                 ;
+                 ;SEC: sono i secondi trascorsi dall'ultima rilevazione
+                 ;m è il minimo battito registrato
+                 ;M è il max battito registrato
+                 ;L è il dato salvato in EEPROM
+                 ;ME è la media degli ultimi 10 campioni raccolti
+                 ;BPM: sono i battiti per minuto
+                 ;Saved si ha quando il dato è salvato in EEPROM
+                 ;*******************************************************
+                 init_LCD_mask:
+                 ;-------------------- Secondi ------------------------------    
+000113 e000      	ldi		r16,0                       ; go to 0,0
+000114 df97      	rcall	LCD_SetAddress            ;
+                 
+000115 e4e0      	ldi		ZL,LOW(Secondi << 1)     ;
+000116 e0f0      	ldi		ZH,HIGH(Secondi << 1)    ;  "Sec:"
+000117 df7a      	rcall	LCD_WriteString  
+                 
+                 
+                 ;--------------------- Minimo ---------------------------
+000118 e008      	ldi		r16,8                       ; go to 8,0
+000119 df92      	rcall	LCD_SetAddress            ;
+                 
+00011a e3e0      	ldi		ZL,LOW(Min << 1)     ;
+00011b e0f0      	ldi		ZH,HIGH(Min << 1)    ;  "m"
+00011c df75      	rcall	LCD_WriteString  
+                 
+                 
+                 ;--------------------- Max ------------------------------
+00011d e00c          ldi		r16,12                       ; go to 12,0
+00011e df8d      	rcall	LCD_SetAddress            ;
+                 
+00011f e3e2      	ldi		ZL,LOW(Max << 1)     ;
+000120 e0f0      	ldi		ZH,HIGH(Max << 1)    ;  "M"
+000121 df70      	rcall	LCD_WriteString  
+                 
+                 ;-------------------- Bpm ------------------------------    
+000122 e208      	ldi		r16,40                       ; go to 0,1
+000123 df88      	rcall	LCD_SetAddress            ;
+                 
+000124 e3ea      	ldi		ZL,LOW(Bpm << 1)     ;
+000125 e0f0      	ldi		ZH,HIGH(Bpm << 1)    ;  "Bpm:"
+000126 df6b      	rcall	LCD_WriteString  
+                 
+                 
+                 
+                 ;--------------------- Dato salvato EEPROM ---------------
+000127 e304      	ldi		r16,52                       ; go to 12,1
+000128 df83      	rcall	LCD_SetAddress            ;
+                 
+000129 e3e8      	ldi		ZL,LOW(Last << 1)     ;
+00012a e0f0      	ldi		ZH,HIGH(Last << 1)    ; "L"
+00012b df66      	rcall	LCD_WriteString  
+                 
+                         
+                 
+00012c 9508      ret
+                 ;==========================================================
+                 
+                 
+                 ; ============================================
+                 ;     INIT INTERRUPT
+                 ; ============================================
+                 ;
+                 ;***********************************************************************
+                 ; la funzione  mi serve per gestire in Input Mode il contatore
+                 ; degli impulsi (rising/falling edge) e
+                 ; mi serve per contare 1 secondo
+                 ; ottenendo gli impulsi captati nell'unità di tempo e quindi la frequenza
+                 init_window_Pulse_Counter_Interrupt:
+00012d 930f         push r16
+                     
+                 ; uso un prescaler di 1024 quindi 4.000.000 Hz / 64 = 62500
+                 ; Hex(3906) = F42 ma il contatore conta in avanti quindi
+                 ; devo inizializzare il contatore non da 0 ma da 0x000 - 0xF424 = 0BDC
+                 ; quindi non riesco a temporizzare 1 secondo se non con i contatori
+                 ; a 16 bit
+00012e e00b      	ldi r16, high(0x0BDC)
+00012f bd0d          out TCNT1H, r16
+000130 ed0c          ldi r16, low(0x0BDC)
+000131 bd0c          out TCNT1L, r16
+                  
+                 ; configuro il prescaler a 64
+                 ; abilito input capture edge sul rising ICES1 -> 1
+                 ; abilito il noise canceler ICNC1 -> 1
+000132 e003          ldi r16, (1 << CS11) | (1 << CS10) 
+000133 bd0e          out TCCR1B, r16
+                      
+                  	
+                 ; abilito l'interrupt di Overflow del contatore nel qual caso
+                 ; si richiamerà la funzione every_Second nella quale
+                 ; si procederà a vedere gli impulsi contati da Counter0, visualizzarli
+                 ; e verificare il max e min e soprattutto azzera il contatore Counter0 per
+                 ; ricominciare a contare da capo
+                 
+                 ; abilito l'interrupt su CAPTURE INPUT gestito dalla relativa routine
+                 ; che incrementerà il contatore di inpulsi ricevuti
+                     
+000134 e004      	ldi r16, (1 << TOIE1)
+000135 bf09          out TIMSK, r16
+                 
+000136 910f         pop r16
+000137 9508      ret
+                 
+                 
+                 
+                 
+                 ; ============================================
+                 ;     INIT PORT
+                 ;
+                 ;     INIZIALIZZA LE PORTE D4 COME INPUT PER 
+                 ;     POTER RILEVARE IL BATTITO
+                 ;     CONFIGURATO COME INPUT CLOCK PER IL 
+                 ;     COUNTER 0.
+                 ;
+                 ;     DICHIARO LE PORTE B0 E B1 COME INPUT
+                 ;     PER LA PRESSIONE DEI TASTI
+                 ; ============================================
+                 ;
+                 
+                 init_My_Port:
+                 
+                 ;   dichiaro la porta B0 come input per il CAPTURE INPUT 
+000138 98b8      	cbi DDRB, 0
+000139 9ac0      	sbi PORTB, 0
+                 
+                 ;   dichiaro la porta B1 come input per salvataggio EEPROM
+00013a 98b9      	cbi DDRB, 1
+00013b 9ac1      	sbi PORTB, 1
+                 
+                 ;   dichiaro la porta B2 come input per calcolo Media
+00013c 98ba      	cbi DDRB, 2
+00013d 9ac2      	sbi PORTB, 2
+                 
+00013e 9508      ret
+                 
+                 
+                 
+                 ; ============================================
+                 ;     IS KEY PRESSED
+                 ;     Funzione che gestisce l'eventuale pressione
+                 ;     di un bottone
+                 ; ============================================
+                 ;
+                 
+                 is_Key_Pressed:
+                 
+                 ;------attivazione salvataggio EEProm -----------------
+00013f 9bb1      	sbis PINB, 1
+000140 d003          rcall key_save_pressed
+                 
+                     ;------attivazione calcolo media -----------------
+000141 9bb2      	sbis PINB, 2
+000142 d013          rcall key_avr_pressed
+                     
+000143 9508      ret
+                 
+                 
+                 ; ============================================
+                 ;     KEY SAVE PRESSED
+                 ;     GESTISCE IL SALVATAGGIO IN EEPROM DEL BATTITO
+                 ; ============================================
+                 ;
+                 
+                 
+                 key_save_pressed:
+000144 930f          push r16
+                 
+000145 e20f       	ldi		r16,47                  
+000146 df65      	rcall	LCD_SetAddress     ; go to 7,1
+                     
+000147 d042       	rcall   EEPROM_write   
+                 	 
+000148 e2ea      	ldi		ZL,LOW(Save << 1)     ;
+000149 e0f0      	ldi		ZH,HIGH(Save << 1)    ; visualizza "Saved"
+00014a df47      	rcall	LCD_WriteString  
+                     
+                     ; visualizzo il nuovo dato salvato
+00014b e305       	ldi		r16,53                  
+00014c df5f      	rcall	LCD_SetAddress     ; go to 13,1
+                 	
+00014d e2e6        	ldi		ZL,LOW(Blank << 1)     ;
+00014e e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+00014f df42      	rcall	LCD_WriteString  
+                 
+000150 e305      	ldi		r16,53                  
+000151 df5a      	rcall	LCD_SetAddress     ; go to 13,1
+                 
+000152 2d00      	mov     r16, battiti       
+000153 df44          rcall	LCD_WriteDecimal   ; conversione e scrittura su LCD
+                     
+                 
+000154 910f      	pop r16    
+000155 9508      ret
+                 
+                 
+                 
+                 
+                 ; ============================================
+                 ;    KEY AVR PRESSED 
+                 ;    GESTISCE LA PRESSIONE DEL TASTO AVR PER 
+                 ;    IL CALCOLO DELLA MEDIA
+                 ; ============================================
+                 ;
+                 
+                 key_avr_pressed:
+                 
+                 ; carico la base dell'array di dati
+                 ; inizio il ciclo per sommare i dati
+                 ; incremento il contatore di disione
+                 ; se un dato è zero mi fermo
+                 ; non posso utilizzare l'indice modulo 10 visto che
+                 ; potrebbe essere stato azzerato
+                 ; faccio la divisione a 16 bit
+                 ; La subroutine prevede:
+                 ; - "dd16uH:dd16uL"        (dividendo)  r17:r16
+                 ; - "dv16uH:dv16uL"        (divisore)   r19:r18
+                 ; Il risultato è posto in 
+                 ; - "dres16uH:dres16uL"    (quoziente)  r17:r16
+                 ; - "drem16uH:drem16uL"    (resto)      r15:r14
+                 ;
+                 ; visualizzo il dato quoziente della divisione
+                 
+                 ; utilizzo il registro r15 come registro temporaneo per 
+                 ; caricare il dato precedentemente memorizzato
+000156 92df          push r13   ; mi serve come contatore di indice array
+000157 92ef      	push r14   ; il registro che andrò poi a sommare avrà forma r15:r14 
+000158 92ff          push r15   ; salvo tutti i registri 
+000159 930f      	push r16
+00015a 931f      	push r17
+00015b 932f      	push r18
+00015c 933f      	push r19   ; ricordo che questo registro l'ho fissato come index dell'array
+                 
+00015d e6c0          ldi YL, low(average)       ; calcolo la base dell'array
+00015e e0d0          ldi YH, high(average)
+                     
+                 
+00015f e20f      	ldi		r16,47                       ; go to 7,1
+000160 df4b      	rcall	LCD_SetAddress            ;
+                 
+000161 e3e4      	ldi		ZL,LOW(Media << 1)     ;
+000162 e0f0      	ldi		ZH,HIGH(Media << 1)    ; display text "ME"
+000163 df2e      	rcall	LCD_WriteString  
+                     
+000164 e301      	ldi		r16,49              ; coordinata di base per visualizzare la media
+000165 df46      	rcall	LCD_SetAddress     ; go to 9,1 
+                  
+000166 e2e6       	ldi		ZL,LOW(Blank << 1)     ;
+000167 e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+000168 df29      	rcall	LCD_WriteString  
+                     
+                 	; azzero tutto
+000169 24dd      	clr r13
+00016a 2700      	clr r16
+00016b 2711      	clr r17
+00016c 2722      	clr r18
+00016d 2733      	clr r19
+                 
+                 	; azzero high byte del mio registro per fare la somma a 16 bit
+00016e 24ff      	clr r15
+                 	 
+                 somma:            ; costruisco il dividendo
+00016f 90e9      	ld  r14,Y+    ; carico il dato in r15 ed incremento
+                  
+000170 20ee         	tst  r14       ; se il dato è 0 significa che abbiamo
+                 	               ; raggiunto la fine dell'array
+000171 f021          breq divisione
+000172 94d3          inc r13
+                 	
+                 
+000173 0d0e      	add r16,r14   ; aggiungo il dato in r16
+000174 1d1f      	adc r17,r15   ; aggiungo il riporto
+                 		
+000175 cff9      rjmp somma   
+                 
+                 divisione:
+                     
+000176 20dd      	tst r13
+000177 f051      	breq uscita_Senza_Divisione         ; se il contatore r13 è = 0 significa che mi sono 
+                 	              ; fermato al primo elemento dell'array ovvero non ci sono
+                 				  ; ancora dati memorizzati e quindi devo uscire
+000178 e030          ldi r19, 0
+000179 2d2d      	mov r18, r13  ; costruisco il divisore
+                   
+00017a deb8      	rcall div16u  ; ottengo il risulato a 16 bit sui registri r17:r16
+                     
+00017b 930f      	push r16
+00017c 931f      	push r17   ; salvo il quoziente della divisione
+                 	; vado sulla posizione 6,1 per poi alla fine scrivere direttamente la media
+00017d e301          ldi		r16, 49                  
+00017e df2d      	rcall	LCD_SetAddress     ; go to 9,1
+                     
+00017f 911f      	pop r17
+000180 910f      	pop r16    ; ripristino il quoziente per lanciare la procedura di visualizzazione
+                  
+000181 df16       	rcall	LCD_WriteDecimal     
+                  
+                 uscita_Senza_Divisione:
+                 
+000182 913f          pop r19   ; ricordo che questo registro l'ho fissato come index dell'array
+000183 912f      	pop r18
+000184 911f      	pop r17
+000185 910f      	pop r16
+000186 90ff      	pop r15
+000187 90ef      	pop r14   
+000188 90df          pop r13
+000189 9508      ret
+                 
+                 
+                 ; ============================================
+                 ;     E E P R O M     S A V E
+                 ;     il valore da salvare è in registro battiti
+                 ; ============================================
+                 ;
+                 
+                 EEPROM_write:
+00018a 932f          push    r18
+00018b 931f      	push    r17
+                 
+00018c e020          ldi     r18, high(last_bpm)
+00018d e010      	ldi     r17, low(last_bpm)
+                 
+                 EEPROM_write_loop:
+                     ; Aspetta il completamente di operazioni precedenti di scrittura
+00018e 99e1          sbic EECR,EEWE
+00018f cffe      rjmp EEPROM_write_loop
+                 
+                     ; Inizializzo l'indirizzo (r18:r17)
+000190 bb2f          out EEARH, r18
+000191 bb1e          out EEARL, r17
+                 
+                     ; Scrivo il dato (battiti) 
+000192 ba0d          out EEDR,battiti
+                 
+                     ; Setto a livello logico 1 -> EEMWE
+000193 9ae2          sbi EECR,EEMWE
+                 
+                     ; Avvio la scrittura impostando ad 1 EEWE
+000194 9ae1          sbi EECR,EEWE
+                     
+000195 911f      	pop   r17
+000196 912f      	pop   r18
+000197 9508      ret
+                 
+                 
+                 
+                 ; ============================================
+                 ;     E E P R O M     R E A D
+                 ;     valore letto è in registro battiti
+                 ; ============================================
+                 ;
+                 
+                 
+                 EEPROM_read:
+000198 932f          push    r18
+000199 931f      	push    r17
+                 
+00019a e020          ldi     r18, high(last_bpm)
+00019b e010      	ldi     r17, low(last_bpm)
+                 
+                 EEPROM_read_loop:
+                     ; Aspetto il completamento di eventuali scritture precedenti
+00019c 99e1          sbic EECR,EEWE
+00019d cffe      rjmp EEPROM_read_loop
+                 
+                     ; Set up dell'indirizzo (r18:r17) 
+00019e bb2f          out EEARH, r18
+00019f bb1e          out EEARL, r17
+                 
+                     ; Avvio la lettura impostando ad 1 EERE
+0001a0 9ae0          sbi EECR,EERE
+                 
+                     ; Leggo il dato
+0001a1 b20d          in battiti,EEDR
+                     
+0001a2 911f      	pop   r17
+0001a3 912f      	pop   r18
+0001a4 9508      ret
+                 
+                 
+                 ; ============================================
+                 ;      I N T 0    M O D E 
+                 ; ============================================
+                 ; conta i battiti al secondo
+                 ; bisogna però sincronizzare l'impulso
+                 ; incrementando il contatore solo 
+                 ; e soltanto quando sento all'interno del secondo
+                 ; sia il falling che il rising edge
+                 ; per fare questo cambio il bit ICES1 passandolo
+                 ; da 1 (rising) a 0 e se è zeo incremento
+                 count_Pulse:
+                 
+0001a5 b65f      	in r5,SREG ; 1, save SREG
+                     
+0001a6 94f8      	cli
+                 	; non disabilito gli interrupt perchè potrebbe passare 1 secondo nel
+                 	; frattempo
+                     
+0001a7 930f          push r16
+                     
+0001a8 b50e      	in r16, TCCR1B
+                 
+0001a9 ff06      	sbrs r16, ICES1       ; l'istruzione successiva sarà eseguita solo se il bit
+                 	                      ; ICES1 non è settato ad 1 che sta ad indicare che siamo
+                 						  ; in falling edge pertanto dobbiamo incrementare il nostro
+                 						  ; contatore e cambiare la modalità su rising edge
+0001aa c001          rjmp cambia_Modalita
+                     
+0001ab c003      	rjmp incrementa_Contatore
+                 
+                 cambia_Modalita:    
+                 	;falling edge
+0001ac e803          ldi r16, (1 << CS11) | (1 << CS10) | (0 << ICES1) | (1 << ICNC1)
+0001ad bd0e          out TCCR1B, r16
+                     
+0001ae c003      	rjmp esci_Senza_Fare_Altro
+                 
+                 incrementa_Contatore:
+                     
+0001af 9543          inc battiti_secondo
+                 
+                  	; rising edge ripristinato
+0001b0 ec03          ldi r16, (1 << CS11) | (1 << CS10) | (1 << ICES1) | (1 << ICNC1)
+0001b1 bd0e          out TCCR1B, r16
+                 
+                 
+                 esci_Senza_Fare_Altro:
+                 
+                    
+                 
+0001b2 910f          pop r16
+                 
+0001b3 be5f      	out SREG,r5
+                 
+0001b4 9518      reti 
+                 
+                 
+                 
+                 ;---------------------------------------------------------------------------------
+                 ;   Funzione WAIT_ONE_SECOND Aspetta un secondo per contare i battiti
+                 ;---------------------------------------------------------------------------------
+                 every_Second:
+                 
+0001b5 94f8      	cli
+                     
+0001b6 930f      	push r16
+                 
+                 	; visualizzo i secondi trascorsi
+0001b7 e004      	ldi		r16,4
+0001b8 def3      	rcall	LCD_SetAddress     ; coordinate 4,0
+                     
+0001b9 e2e6      	ldi		ZL,LOW(Blank << 1)     ;
+0001ba e0f0      	ldi		ZH,HIGH(Blank << 1)    ;  3 spazi bianchi
+0001bb ded6      	rcall	LCD_WriteString  
+                 
+                  
+0001bc e004      	ldi		r16, 4                  
+0001bd deee      	rcall	LCD_SetAddress     ; go to 4,0
+0001be 2d01          mov     r16, timer_minuti
+0001bf ded8      	rcall	LCD_WriteDecimal     
+                     
+0001c0 9413          inc timer_minuti
+                 
+0001c1 e30c          ldi   r16, 60
+0001c2 1610          cp    timer_minuti, r16          ; confronto il contatore con 60 
+0001c3 f040          brlo  uscita_Senza_Fare_Nulla  ; se il contatore è inf ai 60s non devo fare nulla
+                                                    ; altrimenti calcolo e visualizzo BPM
+0001c4 df0c          rcall calcola_BPM
+                 
+0001c5 df0d      	rcall store_BPM	
+                 	
+0001c6 df11      	rcall index_array_Manager
+                 
+0001c7 df17      	rcall visualizza_BPM
+                 
+0001c8 df20      	rcall update_Min
+                 
+0001c9 df30      	rcall update_Max
+                     
+0001ca 2744       	clr battiti_secondo   ; azzero i battiti per secondo
+                 	                      ; azzero il contatore
+0001cb 2411      	clr timer_minuti
+                 
+                 
+                 uscita_Senza_Fare_Nulla:	
+                  
+                   	; rising edge ripristinato
+0001cc ec03          ldi r16, (1 << CS11) | (1 << CS10) | (1 << ICES1) | (1 << ICNC1)
+0001cd bd0e          out TCCR1B, r16
+                 
+0001ce e204          ldi r16, (1 << TOIE1) | ( 1<< TICIE1)
+0001cf bf09          out TIMSK, r16
+                   
+                 	; ricarica il timer per generare un'interruzione ogni secondo
+0001d0 e00b      	ldi r16, high(0x0BDC)
+0001d1 bd0d          out TCNT1H, r16
+0001d2 ed0c          ldi r16, low(0x0BDC)
+0001d3 bd0c          out TCNT1L, r16
+                   
+                    
+0001d4 910f      	pop r16
+                     
+0001d5 9478      	sei
+0001d6 9518      reti
+
+
+RESOURCE USE INFORMATION
+------------------------
+
+Notice:
+The register and instruction counts are symbol table hit counts,
+and hence implicitly used resources are not counted, eg, the
+'lpm' instruction without operands implicitly uses r0 and z,
+none of which are counted.
+
+x,y,z are separate entities in the symbol table and are
+counted separately from r26..r31 here.
+
+.dseg memory usage only counts static data declared with .byte
+
+ATmega8 register use summary:
+r0 :  15 r1 :   7 r2 :   0 r3 :   0 r4 :   0 r5 :   2 r6 :   0 r7 :   0 
+r8 :   0 r9 :   4 r10:   4 r11:   0 r12:   0 r13:   6 r14:  14 r15:  17 
+r16: 110 r17:  26 r18:  18 r19:  13 r20:   8 r21:   0 r22:   0 r23:   0 
+r24:   0 r25:   0 r26:   3 r27:   3 r28:   4 r29:   3 r30:  13 r31:  13 
+x  :   0 y  :   3 z  :   1 
+Registers used: 21 out of 35 (60.0%)
+
+ATmega8 instruction use summary:
+.lds  :   0 .sts  :   0 adc   :   2 add   :   5 adiw  :   0 and   :   0 
+andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
+brcc  :   2 brcs  :   0 breq  :   6 brge  :   0 brhc  :   0 brhs  :   0 
+brid  :   0 brie  :   0 brlo  :   3 brlt  :   0 brmi  :   0 brne  :   8 
+brpl  :   0 brsh  :   1 brtc  :   0 brts  :   0 brvc  :   0 brvs  :   0 
+bset  :   0 bst   :   0 cbi   :  11 cbr   :   0 clc   :   2 clh   :   0 
+cli   :   2 cln   :   0 clr   :  19 cls   :   0 clt   :   0 clv   :   0 
+clz   :   0 com   :   0 cp    :   3 cpc   :   0 cpi   :   3 cpse  :   0 
+dec   :   6 eor   :   0 fmul  :   0 fmuls :   0 fmulsu:   0 icall :   0 
+ijmp  :   0 in    :   3 inc   :   5 ld    :   1 ldd   :   0 ldi   :  90 
+lds   :   0 lpm   :   1 lsl   :   0 lsr   :   0 mov   :  10 movw  :   0 
+mul   :   0 muls  :   0 mulsu :   0 neg   :   0 nop   :   0 or    :   0 
+ori   :   1 out   :  18 pop   :  30 push  :  30 rcall :  78 ret   :  26 
+reti  :  18 rjmp  :  15 rol   :   6 ror   :   0 sbc   :   1 sbci  :   0 
+sbi   :  18 sbic  :   2 sbis  :   2 sbiw  :   1 sbr   :   0 sbrc  :   4 
+sbrs  :   5 sec   :   2 seh   :   0 sei   :   2 sen   :   0 ser   :   0 
+ses   :   0 set   :   0 sev   :   0 sez   :   0 sleep :   0 spm   :   0 
+st    :   2 std   :   0 sts   :   0 sub   :   4 subi  :   0 swap  :   2 
+tst   :   5 wdr   :   0 
+Instructions used: 42 out of 110 (38.2%)
+
+ATmega8 memory use summary [bytes]:
+Segment   Begin    End      Code   Data   Used    Size   Use%
+---------------------------------------------------------------
+[.cseg] 0x000000 0x0003ae    910     32    942    8192  11.5%
+[.dseg] 0x000060 0x00006b      0     11     11    1024   1.1%
+[.eseg] 0x000000 0x000001      0      1      1     512   0.2%
+
+Assembly complete, 0 errors, 9 warnings

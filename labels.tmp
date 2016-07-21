@@ -1,0 +1,94 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.1.42</VERSION>
+ <DEVICE>ATmega8</DEVICE>
+ <WORKING_DIR>D:\desktop\Progetti Pratica\hd44780</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>D:\AVR Tools\AvrAssembler2\Appnotes</DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>D:\AVR Tools\AvrAssembler2\Appnotes\m8def.inc</FILE>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\hd44780_driver.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\hd44780_driver.hex</FILE>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.eep</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.map</FILE>
+  <FILE>D:\desktop\Progetti Pratica\hd44780\CardioFrequenzimetro.lst</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <average><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>40</LINE></average>
+  <last_bpm><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>50</LINE></last_bpm>
+  <ProgramEntryPoint><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>108</LINE></ProgramEntryPoint>
+  <count_Pulse><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>752</LINE></count_Pulse>
+  <every_Second><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>803</LINE></every_Second>
+  <Blank><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>88</LINE></Blank>
+  <Save><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>89</LINE></Save>
+  <Min><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>90</LINE></Min>
+  <Max><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>91</LINE></Max>
+  <Media><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>92</LINE></Media>
+  <Last><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>93</LINE></Last>
+  <Bpm><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>94</LINE></Bpm>
+  <Secondi><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>95</LINE></Secondi>
+  <div8u><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>49</LINE></div8u>
+  <d8u_1><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>53</LINE></d8u_1>
+  <d8u_2><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>60</LINE></d8u_2>
+  <d8u_3><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>67</LINE></d8u_3>
+  <div16u><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>76</LINE></div16u>
+  <d16u_1><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>81</LINE></d16u_1>
+  <d16u_2><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>89</LINE></d16u_2>
+  <d16u_3><FILE>D:\desktop\Progetti Pratica\hd44780\div8u.asm</FILE><LINE>99</LINE></d16u_3>
+  <Init_LCD><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>36</LINE></Init_LCD>
+  <WaitMilliseconds><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>231</LINE></WaitMilliseconds>
+  <InitLoop><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>55</LINE></InitLoop>
+  <LCD_WriteNibble><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>94</LINE></LCD_WriteNibble>
+  <LCD_WriteCommand><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>141</LINE></LCD_WriteCommand>
+  <LCD_WriteData><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>124</LINE></LCD_WriteData>
+  <Wait4xCycles><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>223</LINE></Wait4xCycles>
+  <LCD_WriteString><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>157</LINE></LCD_WriteString>
+  <exit><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>163</LINE></exit>
+  <LCD_WriteDecimal><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>172</LINE></LCD_WriteDecimal>
+  <LCD_WriteDecimalLoop><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>178</LINE></LCD_WriteDecimalLoop>
+  <LCD_WriteDecimalLoop2><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>186</LINE></LCD_WriteDecimalLoop2>
+  <LCD_SetAddress><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>207</LINE></LCD_SetAddress>
+  <WaitMsLoop><FILE>D:\desktop\Progetti Pratica\hd44780\hd44780.asm</FILE><LINE>233</LINE></WaitMsLoop>
+  <init_Sram><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>334</LINE></init_Sram>
+  <init_My_Port><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>482</LINE></init_My_Port>
+  <init_window_Pulse_Counter_Interrupt><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>431</LINE></init_window_Pulse_Counter_Interrupt>
+  <init_LCD_mask><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>371</LINE></init_LCD_mask>
+  <EEPROM_read><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>715</LINE></EEPROM_read>
+  <loop><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>150</LINE></loop>
+  <is_Key_Pressed><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>507</LINE></is_Key_Pressed>
+  <calcola_BPM><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>164</LINE></calcola_BPM>
+  <store_BPM><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>183</LINE></store_BPM>
+  <index_array_Manager><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>201</LINE></index_array_Manager>
+  <exit_index_Manager><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>215</LINE></exit_index_Manager>
+  <visualizza_BPM><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>225</LINE></visualizza_BPM>
+  <update_Min><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>248</LINE></update_Min>
+  <aggiorna_Min><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>261</LINE></aggiorna_Min>
+  <uscita_Update_Min><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>277</LINE></uscita_Update_Min>
+  <update_Max><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>290</LINE></update_Max>
+  <aggiorna_Max><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>303</LINE></aggiorna_Max>
+  <uscita_Update_Max><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>320</LINE></uscita_Update_Max>
+  <loop_init_Sram><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>343</LINE></loop_init_Sram>
+  <key_save_pressed><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>527</LINE></key_save_pressed>
+  <key_avr_pressed><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>567</LINE></key_avr_pressed>
+  <EEPROM_write><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>677</LINE></EEPROM_write>
+  <somma><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>623</LINE></somma>
+  <divisione><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>637</LINE></divisione>
+  <uscita_Senza_Divisione><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>659</LINE></uscita_Senza_Divisione>
+  <EEPROM_write_loop><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>684</LINE></EEPROM_write_loop>
+  <EEPROM_read_loop><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>722</LINE></EEPROM_read_loop>
+  <cambia_Modalita><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>772</LINE></cambia_Modalita>
+  <incrementa_Contatore><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>779</LINE></incrementa_Contatore>
+  <esci_Senza_Fare_Altro><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>788</LINE></esci_Senza_Fare_Altro>
+  <uscita_Senza_Fare_Nulla><FILE>D:\desktop\Progetti Pratica\hd44780\main.asm</FILE><LINE>846</LINE></uscita_Senza_Fare_Nulla>
+ </LABELS>
+</ASSEMBLER_INFO>
